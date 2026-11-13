@@ -84,6 +84,7 @@ body{background:radial-gradient(1200px 500px at 50% -120px,#dfe7f5,var(--bg));fo
 #updb button{flex:1;border:0;border-radius:10px;padding:11px;font:inherit;font-weight:700}
 #updb .ok{background:var(--gold);color:var(--navy)}#updb .no{background:rgba(255,255,255,.15);color:#fff}
 
+#dsr[hidden]{display:none!important}
 /* ===== النسخة 11: خلفية متحركة + شعارات + بحث تفصيلي ===== */
 #bgfx{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none;background:radial-gradient(1000px 600px at 80% -10%,#16396b 0%,transparent 60%),radial-gradient(900px 600px at 0% 110%,#0d2a52 0%,transparent 55%),linear-gradient(160deg,#050f1f,#0a2142 55%,#071a35)}
 #bgfx .grid{position:absolute;inset:-50%;background-image:linear-gradient(rgba(212,175,55,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(212,175,55,.07) 1px,transparent 1px);background-size:46px 46px;transform:perspective(600px) rotateX(60deg);animation:gmove 14s linear infinite}
@@ -174,7 +175,7 @@ input:focus,select:focus{outline:2px solid var(--gold);border-color:var(--gold)!
 <div id="vHome"></div><div id="vFile" hidden></div><div id="vAdm" hidden></div><div id="vRec" hidden></div><div id="vSearch" hidden>
 <div class="card"><div class="lab">القسم</div><div class="chips" id="chips"></div><input type="search" id="q" placeholder="اكتب ما تبحث عنه…" autocomplete="off">
 <div class="ctl"><div class="seg" id="mode"><button data-m="all" class="on">كل الكلمات</button><button data-m="any">أي كلمة</button><button data-m="exact">🎯 مطابق كامل</button></div><select id="fld"><option value="">كل الحقول</option></select><input type="search" id="fnm" placeholder="حصر البحث بملف: اكتب جزءاً من اسمه" autocomplete="off"></div></div></div>
-<div class="card" id="dsr"><details open><summary>🎯 بحث تفصيلي حسب العمود</summary><div id="drows"></div><button class="add" id="dclr">🧹 مسح الخانات</button></details></div><div class="stats"><span id="count"></span><span id="time"></span></div><div id="out"></div></div></div>
+<div class="card" id="dsr" hidden><details open><summary>🎯 بحث تفصيلي حسب العمود</summary><div id="drows"></div><button class="add" id="dclr">🧹 مسح الخانات</button></details></div><div class="stats"><span id="count"></span><span id="time"></span></div><div id="out"></div></div></div>
 
 <div id="copy"><span class="g">✦</span><br>تصميم وبرمجة<b>المنتسب يوسف</b>جميع الحقوق محفوظة © <span id="yr"></span></div>
 <div id="updb"><div id="updt"></div><div class="r"><button class="ok" id="updgo">تحديث الآن</button><button class="no" id="updx">لاحقاً</button></div></div>
@@ -466,7 +467,8 @@ async function login(){
   }catch(e){$("err").textContent="تعذّر تحميل البيانات.";$("go").disabled=false;return}
   ORD=(MAN.order||[]).slice();if(MAN.cfg)CFG=MAN.cfg;$("pw").value="";enter();
 }
-function enter(){$("login").hidden=true;$("app").hidden=false;$("lock").hidden=false;applyCfg();ui();show("vHome");setTimeout(warm,60)}
+function dsrVis(){var d=$("dsr");if(d)d.hidden=!ADM}
+function enter(){$("login").hidden=true;$("app").hidden=false;$("lock").hidden=false;applyCfg();dsrVis();ui();show("vHome");setTimeout(warm,60)}
 function syncOrd(){DB.forEach(function(d){if(ORD.indexOf(d.group)<0)ORD.push(d.group)})}
 function ui(){
   syncOrd();if(grp&&ORD.indexOf(grp)<0)grp="";
@@ -554,9 +556,9 @@ function gateView(){
   $("ago").onclick=async function(){
     var p=$("ap").value;
     if(first){if(p.length<6){$("aerr").textContent="6 أحرف على الأقل.";return}
-      var salt=crypto.getRandomValues(new Uint8Array(16));MAN.admin={salt:u2b(salt),hash:await ph(p,salt)};dirty=true;ADM=true;adminView();ast("اضغط «حفظ التغييرات» لتثبيت كلمة سر المالك.");return}
+      var salt=crypto.getRandomValues(new Uint8Array(16));MAN.admin={salt:u2b(salt),hash:await ph(p,salt)};dirty=true;ADM=true;dsrVis();adminView();ast("اضغط «حفظ التغييرات» لتثبيت كلمة سر المالك.");return}
     var hh=await ph(p,b2u(MAN.admin.salt));
-    if(hh===MAN.admin.hash){ADM=true;adminView()}else $("aerr").textContent="كلمة سر المالك غير صحيحة.";
+    if(hh===MAN.admin.hash){ADM=true;dsrVis();adminView()}else $("aerr").textContent="كلمة سر المالك غير صحيحة.";
   };
   $("ap").onkeydown=function(e){if(e.key==="Enter")$("ago").click()};
 }
@@ -899,6 +901,8 @@ async function readAny(f,pw){
 
 /* ===== مطابق كامل + إضافة كل أنواع الملفات ===== */
 function nz(t){return String(t).toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g,"").replace(/\s+/g," ").trim()}
+/* مطابق: كلمات البحث تطابق بداية الخانة (كلمات كاملة): اسم واحد = الاسم الأول، اسمان = أول اسمين، وهكذا */
+function exm(c,q){if(!q)return false;c=nz(c);return c===q||c.indexOf(q+" ")===0}
 function ents(d){
   var LIM=40000,ss=d.sheets;
   if(!ss.some(function(x){return x.rows.length>LIM}))return [{n:d.name,g:d.group,s:ss}];
@@ -949,7 +953,7 @@ async function search(){
         else{ok=false;for(k=0;k<W.length;k++){if(t.indexOf(W[k])>-1){ok=true;break}}}
         if(ok&&(ex||ci>=0)){
           var cs=rows[ri].split("\t");if(ci>=0)cs=[cs[ci]||""];
-          if(ex){ok=false;for(k=0;k<cs.length;k++){if(cs[k]&&nz(cs[k])===qn){ok=true;break}}}
+          if(ex){ok=false;for(k=0;k<cs.length;k++){if(cs[k]&&exm(cs[k],qn)){ok=true;break}}}
           else{var c=cs[0].toLowerCase();if(all){ok=true;for(k=0;k<ws.length;k++){if(c.indexOf(ws[k])<0){ok=false;break}}}else{ok=false;for(k=0;k<ws.length;k++){if(c.indexOf(ws[k])>-1){ok=true;break}}}}
         }
         if(ok){H.push([di,si,ri]);if(H.length>=CAP){CAPPED=true;break outer}}
@@ -983,7 +987,7 @@ async function dsearch(){
           var cs=rows[ri].split("\t");
           for(k=0;k<conds.length&&ok;k++){
             var cell=cs[ix[k]]||"";
-            if(ex){if(nz(cell)!==conds[k].n)ok=false}
+            if(ex){if(!exm(cell,conds[k].n))ok=false}
             else{cell=cell.toLowerCase();var vv=conds[k].v.split(/\s+/);for(m=0;m<vv.length;m++){if(vv[m]&&cell.indexOf(vv[m])<0){ok=false;break}}}
           }
         }
@@ -998,7 +1002,7 @@ async function dsearch(){
 $("mode").onclick=function(e){
   var m=e.target.getAttribute("data-m");if(!m)return;mode=m;
   Array.prototype.forEach.call($("mode").children,function(b){b.classList.toggle("on",b===e.target)});
-  $("q").placeholder=m==="exact"?"اكتب الاسم كما هو بالضبط…":"اكتب ما تبحث عنه…";
+  $("q").placeholder=m==="exact"?"اكتب الاسم الأول أو أول اسمين أو أكثر…":"اكتب ما تبحث عنه…";
   var has=false;for(var h in DV){if(DV[h]&&DV[h].trim())has=true}
   if(has)dsearch();else search();
 };
