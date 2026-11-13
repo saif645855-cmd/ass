@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="light">
 <title>بنك المعلومات</title>
 <style>
@@ -175,11 +175,12 @@ input:focus,select:focus{outline:2px solid var(--gold);border-color:var(--gold)!
 <div id="vHome"></div><div id="vFile" hidden></div><div id="vAdm" hidden></div><div id="vRec" hidden></div><div id="vSearch" hidden>
 <div class="card"><div class="lab">القسم</div><div class="chips" id="chips"></div><input type="search" id="q" placeholder="اكتب ما تبحث عنه…" autocomplete="off">
 <div class="ctl"><div class="seg" id="mode"><button data-m="all" class="on">كل الكلمات</button><button data-m="any">أي كلمة</button><button data-m="exact">🎯 مطابق كامل</button></div><select id="fld"><option value="">كل الحقول</option></select><input type="search" id="fnm" placeholder="حصر البحث بملف: اكتب جزءاً من اسمه" autocomplete="off"></div></div></div>
-<div class="card" id="dsr" hidden><details open><summary>🎯 بحث تفصيلي حسب العمود</summary><div id="drows"></div><button class="add" id="dclr">🧹 مسح الخانات</button></details></div><div class="stats"><span id="count"></span><span id="time"></span></div><div id="out"></div></div></div>
+<div class="card" id="dsr" hidden><details open><summary>🎯 بحث تفصيلي حسب العمود</summary><div id="drows"></div><button class="add" id="dclr">🧹 مسح الخانات</button></details></div><div class="card" id="rtl" style="margin-top:10px"><div class="chips" id="histw" style="flex-wrap:wrap;margin-bottom:6px"></div><div class="ctl"><select id="srt"><option value="">ترتيب: الافتراضي</option></select><button class="add" id="favb" style="flex:0 0 auto;padding:8px 12px;border:1px solid rgba(255,255,255,.35);border-radius:10px;background:none;color:#fff;font:inherit;font-size:14px">⭐ المفضلة</button><input type="search" id="flt" placeholder="تصفية داخل النتائج…" autocomplete="off"></div><button class="btn" id="xpb" hidden style="margin-top:8px">📥 تصدير النتائج (Excel)</button></div><div class="stats"><span id="count"></span><span id="time"></span></div><div id="out"></div></div></div>
 
 <div id="copy"><span class="g">✦</span><br>تصميم وبرمجة<b>المنتسب يوسف</b>جميع الحقوق محفوظة © <span id="yr"></span></div>
 <div id="updb"><div id="updt"></div><div class="r"><button class="ok" id="updgo">تحديث الآن</button><button class="no" id="updx">لاحقاً</button></div></div>
-<script>document.getElementById("yr").textContent=new Date().getFullYear()</script>
+<script>(function(){var T=null;function arm(){clearTimeout(T);var ap=document.getElementById("app");if(!ap||ap.hidden)return;var m=(typeof CFG!=="undefined"&&CFG.lock!==undefined)?+CFG.lock:5;if(!m)return;T=setTimeout(function(){if(typeof dirty!=="undefined"&&dirty){arm();return}location.reload()},m*60000)}window.__arm=arm;["touchstart","click","keydown","scroll","input"].forEach(function(n){document.addEventListener(n,arm,{passive:true,capture:true})})})()</script>
+<script>(function(){var h=false;document.addEventListener("visibilitychange",function(){var ap=document.getElementById("app");var on=ap&&!ap.hidden;if(document.hidden){if(on){h=true;document.body.style.visibility="hidden"}}else{if(h){h=false;if(typeof dirty!=="undefined"&&dirty){document.body.style.visibility="";return}location.reload()}else document.body.style.visibility=""}})})()</script><style>html,body{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}</style><script>["gesturestart","gesturechange","gestureend"].forEach(function(n){document.addEventListener(n,function(e){e.preventDefault()},{passive:false})});document.addEventListener("touchmove",function(e){if(e.touches.length>1)e.preventDefault()},{passive:false});document.getElementById("yr").textContent=new Date().getFullYear()</script>
 <script>
 var $=function(i){return document.getElementById(i)};
 var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
@@ -367,7 +368,7 @@ function openFile(i){
 }
 function filt(){
   var s=DB[cur.f].sheets[cur.s],q=($("fq").value||"").trim().toLowerCase();cur.p=0;
-  if(!q){cur.list=null}else{var ws=q.split(/\s+/),l=[],Lc=lowOf(s);for(var i=1;i<s.rows.length;i++){var t=Lc[i];if(ws.every(w=>t.indexOf(w)>-1))l.push(i)}cur.list=l}
+  if(!q){cur.list=null}else{var ws=fold(q).split(/\s+/),l=[],Lc=lowOf(s);for(var i=1;i<s.rows.length;i++){var t=Lc[i];if(ws.every(w=>t.indexOf(w)>-1))l.push(i)}cur.list=l}
   drawFile();
 }
 function drawFile(){
@@ -445,6 +446,7 @@ function renderLogin(){
 }
 async function login(){
   var pw=$("pw").value;if(!pw||!META)return;
+  var lkl=lockLeft();if(lkl>0){$("err").textContent="محاولات خاطئة كثيرة. انتظر "+lkl+" ثانية.";return}
   var ui=$("usel").hidden?-1:+$("usel").value;
   $("go").disabled=true;$("err").textContent="";$("prog").textContent="جارٍ التحقق…";
   try{
@@ -453,7 +455,13 @@ async function login(){
       KEY=await crypto.subtle.importKey("raw",raw,"AES-GCM",true,["encrypt","decrypt"]);USER=u.name}
     else{KEY=await dk(pw,b2u(META.salt),META.iter);USER=""}
     MAN=JSON.parse(await dec(KEY,await kv("get","manifest")));
-  }catch(e){$("err").textContent="الرمز غير صحيح.";$("prog").textContent="";$("go").disabled=false;return}
+  }catch(e){failInc();var w2=lockLeft();$("err").textContent=w2>0?"محاولات خاطئة كثيرة. انتظر "+w2+" ثانية.":"الرمز غير صحيح.";$("prog").textContent="";$("go").disabled=false;return}
+  failClr();
+  if(MAN.cfg&&MAN.cfg.exp&&Date.now()>new Date(MAN.cfg.exp+"T23:59:59").getTime()){
+    var okx=false;
+    if(MAN.admin){var op=prompt("انتهت صلاحية هذه الحزمة. أدخل كلمة سر المالك للمتابعة:");if(op){try{okx=(await ph(op,b2u(MAN.admin.salt)))===MAN.admin.hash}catch(e){}}}
+    if(!okx){KEY=null;MAN=null;$("err").textContent="انتهت صلاحية الحزمة. اطلب تحديثاً من المالك.";$("prog").textContent="";$("go").disabled=false;return}
+  }
   try{
     DB=[];var ids=MAN.bundles||[];
     var ld=function(j){return kv("get",ids[j]).then(function(b){return dec(KEY,b)})},pend=ids.length?ld(0):null;
@@ -467,8 +475,8 @@ async function login(){
   }catch(e){$("err").textContent="تعذّر تحميل البيانات.";$("go").disabled=false;return}
   ORD=(MAN.order||[]).slice();if(MAN.cfg)CFG=MAN.cfg;$("pw").value="";enter();
 }
-function dsrVis(){var d=$("dsr");if(d)d.hidden=!ADM}
-function enter(){$("login").hidden=true;$("app").hidden=false;$("lock").hidden=false;applyCfg();dsrVis();ui();show("vHome");setTimeout(warm,60)}
+function dsrVis(){var d=$("dsr");if(d)d.hidden=!ADM;var x=$("xpb");if(x)x.hidden=!ADM}
+function enter(){$("login").hidden=true;$("app").hidden=false;$("lock").hidden=false;applyCfg();dsrVis();ui();show("vHome");setTimeout(warm,60);if(!window.__bioLogin)lss("last_pw",Date.now());window.__bioLogin=false;favLoad();stLoad().then(function(){logA("دخول: "+(USER||"عام"))});if(window.__arm)__arm()}
 function syncOrd(){DB.forEach(function(d){if(ORD.indexOf(d.group)<0)ORD.push(d.group)})}
 function ui(){
   syncOrd();if(grp&&ORD.indexOf(grp)<0)grp="";
@@ -493,8 +501,180 @@ function fillFields(){
   var cur=$("fld").value;
   $("fld").innerHTML='<option value="">كل الحقول</option>'+fieldList().map(function(h){return'<option>'+esc(h)+'</option>'}).join("");
   if(Array.prototype.some.call($("fld").options,function(o){return o.value===cur}))$("fld").value=cur;
+  var sc=$("srt").value;$("srt").innerHTML='<option value="">ترتيب: الافتراضي</option>'+fieldList().map(function(h){return'<option>'+esc(h)+'</option>'}).join("");if(Array.prototype.some.call($("srt").options,function(o){return o.value===sc}))$("srt").value=sc;
 }
 function fillFiles(){fillFields()}
+var BASE=[],FAV=[];
+function lsg(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lss(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function lockLeft(){var u=+lsg("lk_until")||0;return Math.max(0,Math.ceil((u-Date.now())/1000))}
+function failInc(){var n=(+lsg("lk_n")||0)+1;lss("lk_n",n);if(n>=5){var w=Math.min(3600,60*Math.pow(2,Math.floor((n-5)/5)));lss("lk_until",Date.now()+w*1000)}}
+function failClr(){lss("lk_n",0);lss("lk_until",0)}
+function favId(x){var d=DB[x[0]],s=d.sheets[x[1]];return JSON.stringify([d.group,d.name,s.name,s.rows[x[2]]])}
+async function favLoad(){try{var v=lsg("fav_"+(USER||"_"));FAV=v?JSON.parse(await dec(KEY,b2u(v))):[]}catch(e){FAV=[]}}
+async function favSave(){try{lss("fav_"+(USER||"_"),u2b(await enc(KEY,JSON.stringify(FAV))))}catch(e){}}
+function showFav(){
+  SEQ++;var H=[];
+  FAV.forEach(function(f){var a;try{a=JSON.parse(f)}catch(e){return}
+    for(var di=0;di<DB.length;di++){var d=DB[di];if(d.group!==a[0]||d.name!==a[1])continue;
+      for(var si=0;si<d.sheets.length;si++){if(d.sheets[si].name!==a[2])continue;var ri=d.sheets[si].rows.indexOf(a[3],1);if(ri>0){H.push([di,si,ri]);return}}}});
+  RE=/(\u0000)/g;CAPPED=false;BASE=H;$("flt").value="";$("srt").value="";$("time").textContent="⭐ المفضلة";PG=1;refine();
+  if(!H.length)$("out").innerHTML='<div class="empty">⭐ لا توجد سجلات مفضلة بعد. افتح سجلاً واضغط «إضافة إلى المفضلة».</div>';
+}
+function refine(){
+  var f=fold((($("flt")&&$("flt").value)||"").trim()),sk=$("srt")&&$("srt").value,H=BASE;
+  if(f){var ws=f.split(/\s+/).filter(Boolean);H=H.filter(function(x){var t=fold(DB[x[0]].sheets[x[1]].rows[x[2]]);for(var k=0;k<ws.length;k++)if(t.indexOf(ws[k])<0)return false;return true})}
+  if(sk){var ci={},co=new Intl.Collator("ar",{numeric:true}).compare,K=H.map(function(x){var s=DB[x[0]].sheets[x[1]],ck=x[0]+"|"+x[1],i=ci[ck];if(i===undefined){i=(s.rows[0]||"").split("\t").indexOf(sk);ci[ck]=i}return[i<0?"\uffff":(s.rows[x[2]].split("\t")[i]||"\uffff"),x]});
+    K.sort(function(a,b){return co(a[0],b[0])});H=K.map(function(z){return z[1]})}
+  HITS=H;renderPage();
+}
+function csvq(v){v=String(v==null?"":v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+async function saveBlob(blob,name){
+  if(window.Native){Native.begin(name);
+    for(var off=0;off<blob.size;off+=3145728){var b64=await new Promise(function(r){var fr=new FileReader();fr.onload=function(){r(fr.result.split(",")[1])};fr.readAsDataURL(blob.slice(off,off+3145728))});Native.chunk(b64)}
+    Native.end()}
+  else{var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click()}
+}
+async function exportHits(){
+  if(!ADM||!HITS.length)return;var b=$("xpb");b.disabled=true;b.textContent="جارٍ التجهيز…";
+  try{
+    var cols=[],seen={};
+    HITS.forEach(function(x){var s=DB[x[0]].sheets[x[1]],k=x[0]+"|"+x[1];if(seen[k])return;seen[k]=1;(s.rows[0]||"").split("\t").forEach(function(h){if(h&&cols.indexOf(h)<0&&cols.length<80)cols.push(h)})});
+    var parts=["\ufeff"+["القسم","الملف"].concat(cols).map(csvq).join(",")+"\r\n"],ix={},buf=[],ts=performance.now();
+    for(var i=0;i<HITS.length;i++){
+      var x=HITS[i],d=DB[x[0]],s=d.sheets[x[1]],k=x[0]+"|"+x[1],m=ix[k];
+      if(!m){var hd=(s.rows[0]||"").split("\t");m=ix[k]=cols.map(function(c){return hd.indexOf(c)})}
+      var cs=s.rows[x[2]].split("\t");
+      buf.push([d.group,d.name].concat(m.map(function(j){return j<0?"":cs[j]})).map(csvq).join(","));
+      if(buf.length>=5000){parts.push(buf.join("\r\n")+"\r\n");buf=[]}
+      if(performance.now()-ts>12){await tick();ts=performance.now()}
+    }
+    if(buf.length)parts.push(buf.join("\r\n")+"\r\n");
+    logA("تصدير نتائج: "+HITS.length);await saveBlob(new Blob(parts,{type:"text/csv;charset=utf-8"}),"results-"+new Date().toISOString().slice(0,10)+".csv");
+  }catch(e){alert("فشل التصدير: "+e.message)}
+  b.disabled=false;b.textContent="📥 تصدير النتائج (Excel)";
+}
+$("xpb").onclick=exportHits;$("srt").onchange=refine;$("favb").onclick=showFav;
+$("flt").oninput=function(){clearTimeout(window.__ft);window.__ft=setTimeout(refine,200)};
+function extendAdm(){
+  var asv=$("asv");if(!ADM||!asv||$("xset"))return;
+  var rows=0,sheets=0,ch=0;DB.forEach(function(d){d.sheets.forEach(function(s){sheets++;rows+=Math.max(0,s.rows.length-1);var n=s.rows.length;for(var i=0;i<n;i+=50)ch+=(s.rows[i]||"").length*50})});
+  var mb=(ch*2/1048576).toFixed(0),lk=CFG.lock===undefined?5:+CFG.lock,sty='style="width:100%;font:inherit;font-size:15px;padding:10px;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.22)"';
+  var dv=document.createElement("div");dv.className="card";dv.id="xset";dv.style.marginTop="12px";
+  dv.innerHTML='<h3 style="margin:0 0 8px">📊 إحصائيات وإعدادات الأمان</h3><div class="kv"><span>الملفات</span><b>'+DB.length.toLocaleString("ar")+'</b></div><div class="kv"><span>الأوراق</span><b>'+sheets.toLocaleString("ar")+'</b></div><div class="kv"><span>السجلات</span><b>'+rows.toLocaleString("ar")+'</b></div><div class="kv"><span>الحجم التقريبي</span><b>'+mb+' MB</b></div>'
+   +'<div class="lab" style="margin-top:10px">القفل التلقائي عند عدم الاستعمال</div><select id="xlk" '+sty+'>'+[[0,"بدون"],[2,"2 دقيقة"],[5,"5 دقائق"],[10,"10 دقائق"],[30,"30 دقيقة"]].map(function(o){return'<option value="'+o[0]+'"'+(o[0]===lk?" selected":"")+'>'+o[1]+'</option>'}).join("")+'</select>'
+   +'<div class="lab" style="margin-top:10px">تاريخ انتهاء الحزمة (اختياري)</div><input type="date" id="xexp" '+sty+' value="'+(CFG.exp||"")+'"><div style="font-size:12px;opacity:.7;margin-top:6px">بعد هذا التاريخ لا تُفتح الحزمة إلا بكلمة سر المالك. يعتمد على تاريخ الجهاز. اضغط «حفظ التغييرات» ثم صدّر الحزمة.</div>';
+  asv.parentNode.insertBefore(dv,asv);
+  $("xlk").onchange=function(){CFG.lock=+$("xlk").value;dirty=true;ast("اضغط «حفظ التغييرات» لتثبيت القفل التلقائي.");if(window.__arm)__arm()};
+  $("xexp").onchange=function(){if($("xexp").value)CFG.exp=$("xexp").value;else delete CFG.exp;dirty=true;ast("اضغط «حفظ التغييرات» لتثبيت تاريخ الانتهاء.")};
+}
+
+var NOTES={},HIST=[],LOGS=[];
+function cleanSheet(sh){
+  var out=[],rows=sh.rows;
+  for(var i=0;i<rows.length;i++){
+    var c=rows[i].split("\t"),e=true;
+    for(var j=0;j<c.length;j++){c[j]=c[j].replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g,"").replace(/[٠-٩]/g,function(d){return d.charCodeAt(0)-1632}).replace(/[۰-۹]/g,function(d){return d.charCodeAt(0)-1776}).replace(/\s+/g," ").trim();if(c[j])e=false}
+    if(i===0||!e)out.push(c.join("\t"));
+  }
+  sh.rows=out;
+}
+async function stLoad(){
+  var k=USER||"_";
+  try{var v=lsg("note_"+k);NOTES=v?JSON.parse(await dec(KEY,b2u(v))):{}}catch(e){NOTES={}}
+  try{var h=lsg("hist_"+k);HIST=h?JSON.parse(await dec(KEY,b2u(h))):[]}catch(e){HIST=[]}
+  try{var l=lsg("log_"+k);LOGS=l?JSON.parse(await dec(KEY,b2u(l))):[]}catch(e){LOGS=[]}
+  histRender();
+}
+async function stSave(){try{lss("note_"+(USER||"_"),u2b(await enc(KEY,JSON.stringify(NOTES))))}catch(e){}}
+async function histSave(){try{lss("hist_"+(USER||"_"),u2b(await enc(KEY,JSON.stringify(HIST))))}catch(e){}}
+async function logA(a){if(!KEY)return;LOGS.push({t:Date.now(),a:a});if(LOGS.length>300)LOGS=LOGS.slice(-300);try{lss("log_"+(USER||"_"),u2b(await enc(KEY,JSON.stringify(LOGS))))}catch(e){}}
+function histPush(){
+  if(CFG.hist===0)return;var q=($("q").value||"").trim();if(!q)return;
+  HIST=HIST.filter(function(z){return z!==q});HIST.unshift(q);HIST=HIST.slice(0,10);histSave();histRender();
+}
+function histRender(){
+  var w=$("histw");if(!w)return;
+  if(CFG.hist===0||!HIST.length){w.innerHTML="";return}
+  w.innerHTML=HIST.map(function(z,i){return'<button class="chip" data-h="'+i+'">'+esc(z)+'</button>'}).join("")+'<button class="chip" data-h="x">🗑 مسح</button>';
+}
+$("histw").onclick=function(e){
+  var b=e.target.closest("[data-h]");if(!b)return;
+  if(b.dataset.h==="x"){HIST=[];histSave();histRender();return}
+  $("q").value=HIST[+b.dataset.h];search();
+};
+function useInc(g){try{var u=JSON.parse(lsg("use_g")||"{}");u[g]=(u[g]||0)+1;lss("use_g",JSON.stringify(u))}catch(e){}}
+function applySec(){
+  var S=CFG.sec||{},cards=document.querySelectorAll("#vHome .card.sec");
+  var u={};try{u=JSON.parse(lsg("use_g")||"{}")}catch(e){}
+  Array.prototype.forEach.call(cards,function(c,i){
+    var g=window.GK&&GK[i],s=S[g];if(!s)return;
+    if(s.c)c.style.borderTop="4px solid "+s.c;
+    var b=c.querySelector(".sh b");if(b&&s.i&&b.textContent.indexOf(s.i)!==0)b.textContent=s.i+" "+b.textContent;
+  });
+  var box=$("hstat");if(!box){box=document.createElement("div");box.id="hstat";box.className="card";box.style.marginBottom="12px";$("vHome").insertBefore(box,$("vHome").firstChild)}
+  var top=Object.keys(u).sort(function(a,b){return u[b]-u[a]}).slice(0,3),d=CFG.upd?new Date(CFG.upd).toLocaleDateString("ar-IQ"):"—";
+  box.innerHTML='<div class="kv"><span>آخر تحديث للبيانات</span><b>'+d+'</b></div><div class="kv"><span>الأكثر استعمالاً</span><b>'+(top.length?top.map(esc).join(" · "):"—")+'</b></div>'+(CFG.exp?'<div class="kv"><span>صلاحية الحزمة حتى</span><b>'+esc(CFG.exp)+'</b></div>':"");
+}
+var __hm=home;home=function(){__hm();applySec()};
+function hash53(s){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
+async function dupScan(del){
+  var out=$("xdup"),tot=0,files=0,ts=performance.now(),per=[];
+  for(var di=0;di<DB.length;di++){
+    var d=DB[di],dn=0;
+    for(var si=0;si<d.sheets.length;si++){
+      var s=d.sheets[si],M=new Map(),keep=[s.rows[0]],r=s.rows;
+      for(var i=1;i<r.length;i++){
+        var k=fold(r[i]).replace(/\s+/g," "),h=hash53(k),prev=M.get(h),dup=false;
+        if(prev!==undefined){for(var j=0;j<prev.length;j++){if(prev[j]===k){dup=true;break}}if(!dup)prev.push(k)}else M.set(h,[k]);
+        if(dup)dn++;else keep.push(r[i]);
+        if(performance.now()-ts>12){await tick();ts=performance.now()}
+      }
+      if(del&&keep.length!==r.length){s.rows=keep;delete s.L;delete s.N;s.PL=s.PN=null}
+    }
+    if(dn){tot+=dn;files++;per.push([d.name,dn])}
+  }
+  per.sort(function(a,b){return b[1]-a[1]});
+  out.innerHTML=tot?('<div style="margin-top:8px">'+(del?"✅ حُذف ":"عُثر على ")+tot.toLocaleString("ar")+" سجل مكرر داخل "+files+" ملف</div>"+per.slice(0,8).map(function(z){return'<div class="kv"><span>'+esc(z[0])+'</span><b>'+z[1].toLocaleString("ar")+'</b></div>'}).join("")+(del?"":'<button class="btn" id="xdel" style="background:#8a2b2b">🗑 حذف المكررات (يبقى أول سجل)</button>')):'<div style="margin-top:8px">✅ لا يوجد تكرار داخل الأوراق.</div>';
+  if(del&&tot){logA("حذف مكررات: "+tot);touch("تم حذف المكررات. اضغط «حفظ التغييرات».")}
+  var b=$("xdel");if(b)b.onclick=function(){if(confirm("حذف المكررات نهائياً؟ سيبقى أول سجل من كل مجموعة."))dupScan(true)};
+  if(!del)logA("كشف تكرار: "+tot);
+}
+async function chartRun(){
+  var f=$("xch").value,cnt={},ts=performance.now(),scanned=0;
+  if(!f){DB.forEach(function(d){cnt[d.group]=(cnt[d.group]||0)+d.sheets.reduce(function(a,s){return a+Math.max(0,s.rows.length-1)},0)})}
+  else{
+    outer:for(var di=0;di<DB.length;di++)for(var si=0;si<DB[di].sheets.length;si++){
+      var s=DB[di].sheets[si],ci=(s.rows[0]||"").split("\t").indexOf(f);if(ci<0)continue;
+      for(var i=1;i<s.rows.length;i++){var v=(s.rows[i].split("\t")[ci]||"").trim();if(v)cnt[v]=(cnt[v]||0)+1;if(++scanned>=300000)break outer;
+        if(performance.now()-ts>12){await tick();ts=performance.now()}}
+    }
+  }
+  var ks=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]}).slice(0,10),mx=Math.max.apply(null,ks.map(function(k){return cnt[k]}))||1;
+  $("xcho").innerHTML=ks.length?ks.map(function(k){return'<div style="margin:6px 0"><div style="font-size:13px;display:flex;justify-content:space-between"><span>'+esc(k)+'</span><b>'+cnt[k].toLocaleString("ar")+'</b></div><div style="height:10px;border-radius:6px;background:rgba(255,255,255,.12)"><div style="height:10px;border-radius:6px;width:'+Math.max(2,cnt[k]/mx*100)+'%;background:linear-gradient(90deg,#d4af37,#f1d77a)"></div></div></div>'}).join("")+(f&&scanned>=300000?'<div style="font-size:12px;opacity:.7">تم فحص أول 300 ألف سجل.</div>':""):'<div class="empty">لا توجد بيانات.</div>';
+}
+function extendAdm2(){
+  var xs=$("xset");if(!xs||$("xset2"))return;
+  var sty='style="width:100%;font:inherit;font-size:15px;padding:10px;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.22);margin-top:6px"',S=CFG.sec||{};
+  var dv=document.createElement("div");dv.className="card";dv.id="xset2";dv.style.marginTop="12px";
+  dv.innerHTML='<h3 style="margin:0 0 8px">🧰 أدوات متقدمة</h3>'
+   +'<div class="lab">تنظيف تلقائي عند استيراد الملفات</div><select id="xcl" '+sty+'><option value="1"'+(CFG.clean!==0?" selected":"")+'>مفعّل</option><option value="0"'+(CFG.clean===0?" selected":"")+'>معطّل</option></select>'
+   +'<div class="lab" style="margin-top:10px">سجل البحث الأخير للمستخدمين</div><select id="xhs" '+sty+'><option value="1"'+(CFG.hist!==0?" selected":"")+'>مفعّل</option><option value="0"'+(CFG.hist===0?" selected":"")+'>معطّل</option></select>'
+   +'<div class="lab" style="margin-top:12px">ألوان وأيقونات الأقسام</div><div id="xsec"></div>'
+   +'<button class="btn" id="xdb" style="margin-top:12px">🔍 كشف التكرار</button><div id="xdup"></div>'
+   +'<div class="lab" style="margin-top:12px">رسم بياني</div><select id="xch" '+sty+'><option value="">عدد السجلات حسب القسم</option>'+fieldList().map(function(h){return'<option>'+esc(h)+'</option>'}).join("")+'</select><button class="btn" id="xchb" style="margin-top:8px">📊 ارسم</button><div id="xcho"></div>'
+   +'<div class="lab" style="margin-top:12px">سجل النشاط على هذا الجهاز</div><div id="xlg" style="max-height:220px;overflow:auto;font-size:13px"></div><button class="btn" id="xlc" style="margin-top:8px;background:#13315c">🧹 مسح السجل</button>';
+  xs.parentNode.insertBefore(dv,xs.nextSibling);
+  $("xsec").innerHTML=ORD.map(function(g,i){var s=S[g]||{};return'<div class="srow"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(g)+'</span><input data-si="'+i+'" class="si" value="'+esc(s.i||"")+'" placeholder="🙂" style="flex:0 0 52px;text-align:center"><input data-sc="'+i+'" class="sc" type="color" value="'+(s.c||"#d4af37")+'" style="flex:0 0 52px;padding:2px"></div>'}).join("")||'<div class="empty">لا توجد أقسام.</div>';
+  $("xsec").oninput=function(e){var el=e.target,i=el.dataset.si!==undefined?+el.dataset.si:+el.dataset.sc,g=ORD[i];CFG.sec=CFG.sec||{};var s=CFG.sec[g]=CFG.sec[g]||{};if(el.classList.contains("si"))s.i=el.value.trim();else s.c=el.value;dirty=true;ast("اضغط «حفظ التغييرات» لتثبيت المظهر.")};
+  $("xcl").onchange=function(){CFG.clean=+$("xcl").value;dirty=true;ast("اضغط «حفظ التغييرات».")};
+  $("xhs").onchange=function(){CFG.hist=+$("xhs").value;dirty=true;histRender();ast("اضغط «حفظ التغييرات».")};
+  $("xdb").onclick=function(){$("xdup").innerHTML='<div style="margin-top:8px">جارٍ الفحص…</div>';dupScan(false)};
+  $("xchb").onclick=chartRun;
+  function lg(){$("xlg").innerHTML=LOGS.slice(-30).reverse().map(function(z){return'<div class="kv"><span style="min-width:120px">'+new Date(z.t).toLocaleString("ar-IQ")+'</span><b>'+esc(z.a)+'</b></div>'}).join("")||'<div class="empty">فارغ</div>'}
+  lg();$("xlc").onclick=function(){LOGS=[];try{localStorage.removeItem("log_"+(USER||"_"))}catch(e){}lg()};
+}
+var __av=adminView;adminView=function(){__av();extendAdm();extendAdm2()};
 function search(){
   PG=1;var q=($("q").value||"").trim().toLowerCase();
   if(!q){HITS=[];var tot=0;DB.forEach(function(d){if(grp&&d.group!==grp)return;d.sheets.forEach(function(s){tot+=Math.max(0,s.rows.length-1)})});
@@ -544,7 +724,23 @@ $("out").onclick=function(e){
 function openRec(x){
   var d=DB[x[0]],s=d.sheets[x[1]],head=(s.rows[0]||"").split("\t"),c=s.rows[x[2]].split("\t"),title=c.filter(Boolean)[0]||"سجل";
   $("vRec").innerHTML='<button class="back" id="rb">→ رجوع للنتائج</button><div class="card"><h3 style="margin:0 0 4px;color:var(--navy)">'+esc(title)+'</h3><div class="src">'+esc(d.group)+' › '+esc(d.name)+' › '+esc(s.name)+' › صف '+x[2]+'</div>'+c.map(function(v,i){return v?'<div class="kv"><span>'+esc(head[i]||("عمود "+(i+1)))+'</span><b>'+esc(v)+'</b></div>':""}).join("")+'</div>';
-  $("rb").onclick=function(){show("vSearch")};show("vRec");
+  $("rb").onclick=function(){show("vSearch")};
+  var rbtn=document.createElement("button");rbtn.className="btn";rbtn.textContent="📄 تقرير (حفظ / مشاركة)";rbtn.style.marginTop="10px";
+  rbtn.onclick=function(){makeReport(head,c,title,d,s)};var card=$("vRec").querySelector(".card");card.appendChild(rbtn);useInc(d.group);histPush();
+  var nid=favId(x),nb=document.createElement("div");nb.innerHTML='<div class="lab" style="margin-top:12px">📝 ملاحظتي (على هذا الجهاز فقط)</div><textarea id="nt" rows="3" style="width:100%;font:inherit;font-size:14px;padding:10px;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.22)"></textarea>';card.appendChild(nb);$("nt").value=NOTES[nid]||"";$("nt").onchange=function(){var v=$("nt").value.trim();if(v)NOTES[nid]=v;else delete NOTES[nid];stSave()};
+  var fb=document.createElement("button");fb.className="btn";fb.style.marginTop="8px";var fid=favId(x);function fl(){fb.textContent=FAV.indexOf(fid)>=0?"⭐ إزالة من المفضلة":"☆ إضافة إلى المفضلة"}fl();fb.onclick=function(){var i=FAV.indexOf(fid);if(i>=0)FAV.splice(i,1);else FAV.push(fid);fl();favSave()};card.appendChild(fb);show("vRec");
+}
+async function makeReport(head,c,title,d,s){
+  var dt=new Date().toISOString().slice(0,10),rows=c.map(function(v,i){return v?'<tr><th>'+esc(head[i]||("عمود "+(i+1)))+'</th><td>'+esc(v)+'</td></tr>':""}).join("");
+  var html='<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(title)+'</title><style>body{font-family:Tahoma,Arial,sans-serif;margin:0;background:#f4f1ea;color:#222}.h{background:#0a1f40;color:#fff;padding:20px 18px}.h h1{margin:0;font-size:20px}.h div{opacity:.8;font-size:12px;margin-top:6px}.w{padding:14px}table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #c9a24a}th{background:#f3e9d0;text-align:right;width:38%;padding:9px 10px;border:1px solid #e3d6b3;font-size:13px}td{padding:9px 10px;border:1px solid #e3d6b3;font-size:14px;word-break:break-word}.f{text-align:center;color:#777;font-size:11px;padding:12px}@media print{body{background:#fff}.h{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="h"><h1>'+esc(title)+'</h1><div>'+esc(d.name)+' › '+esc(s.name)+' — '+dt+'</div></div><div class="w"><table>'+rows+'</table></div><div class="f">تقرير مُصدَّر من التطبيق</div></body></html>';
+  var blob=new Blob([html],{type:"text/html"}),name="report-"+dt+"-"+Date.now().toString(36)+".html";
+  try{
+    if(window.Native){
+      Native.begin(name);
+      var b64=await new Promise(function(r){var fr=new FileReader();fr.onload=function(){r(fr.result.split(",")[1])};fr.readAsDataURL(blob)});
+      Native.chunk(b64);Native.end();
+    }else{var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click()}
+  }catch(e){alert("فشل إنشاء التقرير: "+e.message)}
 }
 $("q").oninput=function(){clearTimeout(timer);timer=setTimeout(search,120)};
 $("fnm").oninput=function(){clearTimeout(timer);timer=setTimeout(function(){fillFields();search()},180)};
@@ -595,16 +791,17 @@ async function saveAll(){
     var fl=async function(){if(!cur.length)return;var id="b"+String(bundles.length+1).padStart(3,"0");out.push([id,await enc(KEY,JSON.stringify(cur))]);bundles.push(id);cur=[];size=0};
     for(var i=0;i<DB.length;i++){var d=DB[i];var es=ents(d);for(var q9=0;q9<es.length;q9++){cur.push(es[q9]);es[q9].s.forEach(function(s){s.rows.forEach(function(t){size+=t.length})});if(size>4e6)await fl()}}
     await fl();
-    var man={bundles:bundles,files:DB.length,admin:MAN.admin,order:ORD,cfg:CFG},mb=await enc(KEY,JSON.stringify(man));
+    CFG.upd=new Date().toISOString();var man={bundles:bundles,files:DB.length,admin:MAN.admin,order:ORD,cfg:CFG},mb=await enc(KEY,JSON.stringify(man));
     var lg=await kv("get","logo");
     await kv("clear");await kv("set","meta",META);if(lg)await kv("set","logo",lg);
     for(var j=0;j<out.length;j++)await kv("set",out[j][0],out[j][1].buffer);
     await kv("set","manifest",mb.buffer);
-    MAN=man;dirty=false;ui();ast("✅ تم الحفظ ("+DB.length.toLocaleString("ar")+" ملف)");
+    MAN=man;dirty=false;logA("حفظ تغييرات");ui();ast("✅ تم الحفظ ("+DB.length.toLocaleString("ar")+" ملف)");
   }catch(e){ast("فشل الحفظ: "+e.message)}
 }
 async function exportPack(){
   if(dirty){ast("احفظ التغييرات أولاً.");return}
+  logA("تصدير حزمة");
   ast("تجهيز الحزمة…");
   try{
     var meta=await kv("get","meta"),ids=["manifest"].concat(MAN.bundles),bufs=[],parts=[];
@@ -660,7 +857,7 @@ async function saveAll(){
     var fl=async function(){if(!cur.length)return;var id="b"+String(bundles.length+1).padStart(3,"0");out.push([id,await enc(KEY,JSON.stringify(cur))]);bundles.push(id);cur=[];size=0};
     for(var i=0;i<DB.length;i++){var d=DB[i];var es=ents(d);for(var q9=0;q9<es.length;q9++){cur.push(es[q9]);es[q9].s.forEach(function(s){s.rows.forEach(function(t){size+=t.length})});if(size>4e6)await fl()}}
     await fl();
-    var man={bundles:bundles,files:DB.length,admin:MAN.admin,order:ORD,cfg:CFG},mb=await enc(KEY,JSON.stringify(man));
+    CFG.upd=new Date().toISOString();var man={bundles:bundles,files:DB.length,admin:MAN.admin,order:ORD,cfg:CFG},mb=await enc(KEY,JSON.stringify(man));
     var lg=await kv("get","logo"),ent=[["meta",META],["manifest",mb.buffer]];
     out.forEach(function(o){ent.push([o[0],o[1].buffer])});if(lg)ent.push(["logo",lg]);
     await kvReplace(ent);   // عملية واحدة: إما أن تنجح كلها أو تبقى البيانات القديمة سليمة
@@ -718,6 +915,8 @@ window.onBioResult=function(ok){
 };
 window.onBioSecret=function(sec){
   if(!sec){$("err").textContent="فعّل البصمة أولاً بعد تسجيل الدخول.";return}
+  if(Date.now()-(+lsg("last_pw")||0)>6048e5){$("err").textContent="مضت 7 أيام: اكتب كلمة السر يدوياً هذه المرة.";return}
+  window.__bioLogin=true;
   try{var o=JSON.parse(sec);$("pw").value=o.pw;if(o.u!==undefined&&!$("usel").hidden)$("usel").value=o.u;login()}catch(e){$("err").textContent="تعذّر فتح البيانات."}
 };
 function bioInit(){
@@ -802,7 +1001,7 @@ $("drows").oninput=function(e){
 };
 $("dclr").onclick=function(){DV={};drDraw();search()};
 function dsearch(){
-  var conds=[];for(var h in DV){if(DV[h]&&DV[h].trim())conds.push({f:h,v:DV[h].trim().toLowerCase()})}
+  var conds=[];for(var h in DV){if(DV[h]&&DV[h].trim())conds.push({f:h,v:fold(DV[h].trim())})}
   if(!conds.length){search();return}
   PG=1;var t0=performance.now(),fn=($("fnm").value||"").trim().toLowerCase(),ws=[];
   conds.forEach(function(c){c.v.split(/\s+/).forEach(function(w){if(w)ws.push(w)})});
@@ -900,7 +1099,9 @@ async function readAny(f,pw){
 /* ===== نهاية القارئ ===== */
 
 /* ===== مطابق كامل + إضافة كل أنواع الملفات ===== */
-function nz(t){return String(t).toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g,"").replace(/\s+/g," ").trim()}
+function fold(t){return String(t).toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g,"").replace(/[أإآٱ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي")}
+function reF(w){return reEsc(w).replace(/ا/g,"[اأإآٱ]").replace(/ه/g,"[هة]").replace(/ي/g,"[يى]")}
+function nz(t){return fold(t).replace(/\s+/g," ").trim()}
 /* مطابق: كلمات البحث تطابق بداية الخانة (كلمات كاملة): اسم واحد = الاسم الأول، اسمان = أول اسمين، وهكذا */
 function exm(c,q){if(!q)return false;c=nz(c);return c===q||c.indexOf(q+" ")===0}
 function ents(d){
@@ -928,16 +1129,16 @@ function lowA(s,st){
   var pk="P"+key;if(s[pk])return s[pk];
   return hid(s,pk,(async function(){
     var r=s.rows,n=r.length,a=new Array(n),ts=performance.now();
-    for(var i=0;i<n;i++){var x=r[i].toLowerCase();a[i]=st?x.replace(SP,""):x;if((i&16383)===0&&performance.now()-ts>10){await tick();ts=performance.now()}}
+    for(var i=0;i<n;i++){a[i]=fold(r[i]);if((i&16383)===0&&performance.now()-ts>10){await tick();ts=performance.now()}}
     hid(s,key,a);s[pk]=null;return a})());
 }
 async function warm(){for(var i=0;i<DB.length;i++){for(var j=0;j<DB[i].sheets.length;j++){await lowA(DB[i].sheets[j],false)}}}
 async function search(){
-  var my=++SEQ;PG=1;var q=($("q").value||"").trim().toLowerCase();
-  if(!q){HITS=[];CAPPED=false;var tot=0;DB.forEach(function(d){if(grp&&d.group!==grp)return;d.sheets.forEach(function(s){tot+=Math.max(0,s.rows.length-1)})});
+  var my=++SEQ;PG=1;var q=fold(($("q").value||"").trim());
+  if(!q){HITS=[];BASE=[];CAPPED=false;var tot=0;DB.forEach(function(d){if(grp&&d.group!==grp)return;d.sheets.forEach(function(s){tot+=Math.max(0,s.rows.length-1)})});
     $("count").textContent=tot.toLocaleString("ar")+" سجل جاهز للبحث";$("time").textContent="";$("out").innerHTML='<div class="empty">⌨️ اكتب في خانة البحث لتبدأ</div>';return}
   var ex=mode==="exact",t0=performance.now(),ws=q.split(/\s+/).filter(Boolean),all=mode!=="any",fn=($("fnm").value||"").trim().toLowerCase(),fld=$("fld").value,qn=nz(q),qw=qn.split(" ").filter(Boolean);
-  RE=ex?new RegExp("("+reEsc(q)+")","gi"):new RegExp("("+ws.map(reEsc).join("|")+")","gi");
+  RE=ex?new RegExp("("+reF(q)+")","gi"):new RegExp("("+ws.map(reF).join("|")+")","gi");
   var H=[],ts=performance.now(),di,si,ri,k;CAPPED=false;
   $("time").textContent="…";
   outer:for(di=0;di<DB.length;di++){
@@ -954,7 +1155,7 @@ async function search(){
         if(ok&&(ex||ci>=0)){
           var cs=rows[ri].split("\t");if(ci>=0)cs=[cs[ci]||""];
           if(ex){ok=false;for(k=0;k<cs.length;k++){if(cs[k]&&exm(cs[k],qn)){ok=true;break}}}
-          else{var c=cs[0].toLowerCase();if(all){ok=true;for(k=0;k<ws.length;k++){if(c.indexOf(ws[k])<0){ok=false;break}}}else{ok=false;for(k=0;k<ws.length;k++){if(c.indexOf(ws[k])>-1){ok=true;break}}}}
+          else{var c=fold(cs[0]);if(all){ok=true;for(k=0;k<ws.length;k++){if(c.indexOf(ws[k])<0){ok=false;break}}}else{ok=false;for(k=0;k<ws.length;k++){if(c.indexOf(ws[k])>-1){ok=true;break}}}}
         }
         if(ok){H.push([di,si,ri]);if(H.length>=CAP){CAPPED=true;break outer}}
         if((ri&4095)===0&&performance.now()-ts>10){await tick();if(my!==SEQ)return;ts=performance.now()}
@@ -962,14 +1163,14 @@ async function search(){
     }
   }
   if(my!==SEQ)return;
-  HITS=H;$("time").textContent=(performance.now()-t0).toFixed(0)+" م.ث";renderPage();
+  BASE=H;$("time").textContent=(performance.now()-t0).toFixed(0)+" م.ث";refine();
 }
 async function dsearch(){
-  var conds=[];for(var h in DV){if(DV[h]&&DV[h].trim())conds.push({f:h,v:DV[h].trim().toLowerCase()})}
+  var conds=[];for(var h in DV){if(DV[h]&&DV[h].trim())conds.push({f:h,v:fold(DV[h].trim())})}
   if(!conds.length){return search()}
   var my=++SEQ;PG=1;var ex=mode==="exact",t0=performance.now(),fn=($("fnm").value||"").trim().toLowerCase(),ws=[],pre=[];
   conds.forEach(function(c){c.n=nz(c.v);if(ex){ws.push(c.v);c.n.split(" ").forEach(function(w){if(w)pre.push(w)})}else{c.v.split(/\s+/).forEach(function(w){if(w){ws.push(w);pre.push(w)}})}});
-  RE=new RegExp("("+ws.map(reEsc).join("|")+")","gi");
+  RE=new RegExp("("+ws.map(reF).join("|")+")","gi");
   var H=[],ts=performance.now(),di,si,ri,k,m;CAPPED=false;
   $("time").textContent="…";
   outer:for(di=0;di<DB.length;di++){
@@ -988,7 +1189,7 @@ async function dsearch(){
           for(k=0;k<conds.length&&ok;k++){
             var cell=cs[ix[k]]||"";
             if(ex){if(!exm(cell,conds[k].n))ok=false}
-            else{cell=cell.toLowerCase();var vv=conds[k].v.split(/\s+/);for(m=0;m<vv.length;m++){if(vv[m]&&cell.indexOf(vv[m])<0){ok=false;break}}}
+            else{cell=fold(cell);var vv=conds[k].v.split(/\s+/);for(m=0;m<vv.length;m++){if(vv[m]&&cell.indexOf(vv[m])<0){ok=false;break}}}
           }
         }
         if(ok){H.push([di,si,ri]);if(H.length>=CAP){CAPPED=true;break outer}}
@@ -997,7 +1198,7 @@ async function dsearch(){
     }
   }
   if(my!==SEQ)return;
-  HITS=H;$("time").textContent=(performance.now()-t0).toFixed(0)+" م.ث";renderPage();
+  BASE=H;$("time").textContent=(performance.now()-t0).toFixed(0)+" م.ث";refine();
 }
 $("mode").onclick=function(e){
   var m=e.target.getAttribute("data-m");if(!m)return;mode=m;
@@ -1012,7 +1213,7 @@ async function addXl(list){
   for(var i=0;i<list.length;i++){
     var f=list[i];ast("معالجة "+(i+1)+" من "+list.length+"…");
     try{
-      var sheets=await readAny(f,pw);
+      var sheets=await readAny(f,pw);if(CFG.clean!==0)sheets.forEach(cleanSheet);
       if(!sheets.length){fails.push(f.name+" (فارغ)");continue}
       var ix=-1;for(var k=0;k<DB.length;k++){if(DB[k].name===f.name&&DB[k].group===g){ix=k;break}}
       if(ix>=0){DB[ix]={name:f.name,group:g,sheets:sheets};repl++}else{DB.push({name:f.name,group:g,sheets:sheets});added++}

@@ -85,6 +85,10 @@ final class ViewController: UIViewController, WKScriptMessageHandler, WKUIDelega
         web.isOpaque = false
         web.backgroundColor = .clear
         web.scrollView.backgroundColor = .clear
+        web.scrollView.minimumZoomScale = 1.0
+        web.scrollView.maximumZoomScale = 1.0
+        web.scrollView.bouncesZoom = false
+        web.scrollView.pinchGestureRecognizer?.isEnabled = false
         view.addSubview(web)
 
         let g = view.safeAreaLayoutGuide
