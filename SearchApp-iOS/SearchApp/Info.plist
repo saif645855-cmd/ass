@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key><string>ar</string>
-	<key>CFBundleDisplayName</key><string>بنك المعلومات</string>
+	<key>CFBundleDisplayName</key><string>بنك المعلومات 1</string>
 	<key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
@@ -16,8 +16,7 @@
 	<key>LSSupportsOpeningDocumentsInPlace</key><true/>
 	<key>UIFileSharingEnabled</key><true/>
 	<key>NSFaceIDUsageDescription</key><string>للدخول إلى التطبيق بالوجه</string>
-	<key>UILaunchScreen</key>
-	<dict/>
+	<key>UILaunchStoryboardName</key><string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key><array><string>arm64</string></array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>

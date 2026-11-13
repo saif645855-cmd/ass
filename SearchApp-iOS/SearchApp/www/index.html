@@ -624,9 +624,23 @@ async function exportPack(){
 $("imp").onclick=function(){$("pk").click()};
 $("pk").onchange=async function(e){
   var f=e.target.files[0];e.target.value="";if(!f)return;
-  $("prog").textContent="جارٍ استيراد الحزمة…";$("err").textContent="";
-  try{await importPack(await f.arrayBuffer());await boot();$("prog").textContent="✅ تم الاستيراد. سجّل الدخول."}
-  catch(x){$("err").textContent="ملف الحزمة غير صالح.";$("prog").textContent=""}
+  var mb=(f.size/1048576).toFixed(1)+" MB",stage="قراءة الملف";
+  $("prog").textContent="جارٍ استيراد الحزمة ("+mb+")…";$("err").textContent="";
+  try{
+    if(!window.indexedDB)throw new Error("قاعدة التخزين غير متاحة");
+    var buf=await f.arrayBuffer();
+    stage="فحص الترويسة";
+    if(buf.byteLength<8)throw new Error("الملف فارغ أو ناقص ("+f.name+")");
+    var hl=new DataView(buf).getUint32(0);
+    if(!(hl>0&&hl<buf.byteLength))throw new Error("هذا ليس ملف حزمة .pack ("+f.name+")");
+    var h=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,hl)));
+    if(!h||!h.parts||!h.salt)throw new Error("ترويسة الحزمة غير مكتملة");
+    stage="الحفظ بالجهاز";
+    await importPack(buf);
+    stage="التشغيل";
+    await boot();
+    $("prog").textContent="✅ تم الاستيراد. سجّل الدخول."
+  }catch(x){$("err").textContent="تعذّر الاستيراد ("+stage+"): "+((x&&x.message)||x)+" — "+mb;$("prog").textContent=""}
 };
 /* ---- إضافة الملفات: لا يُحذف شيء إلا ما يطابق الاسم والقسم ---- */
 var LM=30;
