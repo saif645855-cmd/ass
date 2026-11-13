@@ -1,0 +1,15 @@
+workflows:
+  ios-ipa:
+    name: Build IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    scripts:
+      - name: Build unsigned IPA
+        script: |
+          cd SearchApp-iOS
+          xcodebuild -project SearchApp.xcodeproj -scheme SearchApp -sdk iphoneos -configuration Release -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/SearchApp.app Payload/
+          zip -qry SearchApp.ipa Payload
+    artifacts:
+      - SearchApp-iOS/SearchApp.ipa
